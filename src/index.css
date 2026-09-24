@@ -1,0 +1,155 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg-primary: #06090e;
+    --bg-secondary: #0b0f17;
+    --bg-card: #101623;
+    --bg-card-hover: #151d2e;
+    --border-subtle: #1e293b;
+    --border-accent: #334155;
+  }
+
+  body {
+    background-color: var(--bg-primary);
+    color: #f1f5f9;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+  }
+
+  code, pre, .font-mono {
+    font-family: 'JetBrains Mono', monospace;
+  }
+}
+
+/* Custom Tactical Glass & Card Styles */
+.glass-panel {
+  background: rgba(16, 22, 35, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.glass-panel-subtle {
+  background: rgba(11, 15, 23, 0.7);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.command-grid-bg {
+  background-image: radial-gradient(rgba(56, 189, 248, 0.08) 1px, transparent 0);
+  background-size: 24px 24px;
+}
+
+.topographic-bg {
+  background-color: #06090e;
+  background-image: radial-gradient(circle at 50% 0%, rgba(2, 132, 199, 0.12) 0%, transparent 60%);
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0b0f17;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1e293b;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #334155;
+}
+
+/* Leaflet Custom Styling Overrides */
+.leaflet-container {
+  width: 100%;
+  height: 100%;
+  background: #0b0f17 !important;
+  font-family: inherit;
+}
+
+.leaflet-tile {
+  filter: brightness(0.78) invert(1) contrast(3) hue-rotate(200deg) saturate(0.3) brightness(0.7);
+}
+
+.leaflet-popup-content-wrapper {
+  background: #101623 !important;
+  color: #f1f5f9 !important;
+  border: 1px solid #1e293b !important;
+  border-radius: 0.75rem !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6) !important;
+  padding: 0 !important;
+}
+
+.leaflet-popup-content {
+  margin: 0 !important;
+  line-height: 1.5;
+}
+
+.leaflet-popup-tip {
+  background: #101623 !important;
+  border: 1px solid #1e293b !important;
+}
+
+.leaflet-control-zoom {
+  border: 1px solid #1e293b !important;
+  border-radius: 0.5rem !important;
+  overflow: hidden;
+}
+
+.leaflet-control-zoom a {
+  background-color: #101623 !important;
+  color: #94a3b8 !important;
+  border-bottom: 1px solid #1e293b !important;
+}
+
+.leaflet-control-zoom a:hover {
+  background-color: #151d2e !important;
+  color: #38bdf8 !important;
+}
+
+/* Pulse Keyframes */
+@keyframes radar-pulse {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 12px rgba(239, 68, 68, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+  }
+}
+
+.pulse-emergency {
+  animation: radar-pulse 2s infinite;
+}
+
+@keyframes sweep-line {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(1000%); }
+}
+
+.scanline {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.4), transparent);
+  animation: sweep-line 6s linear infinite;
+  pointer-events: none;
+}

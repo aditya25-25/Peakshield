@@ -1,29 +1,26 @@
-import React, { useState, useId } from 'react';
+import React, { useState } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Circle, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { 
-  Layers, 
-  Eye, 
-  EyeOff, 
-  Compass, 
-  AlertTriangle, 
   ShieldAlert, 
+  AlertTriangle, 
   Building2, 
-  CloudRain, 
-  Car, 
+  Navigation, 
+  Layers, 
   Info, 
   X, 
-  MapPin, 
-  TrendingUp, 
-  CheckCircle2,
-  Navigation
+  CheckCircle2, 
+  Compass, 
+  CloudRain, 
+  TrendingDown, 
+  ChevronRight,
+  Maximize2
 } from 'lucide-react';
 import { useEmergency } from '../../context/EmergencyContext';
 import { RiskZone, Incident, SafeShelter, RiskLevel } from '../../types';
 import { RiskBadge } from '../common/RiskBadge';
 import { VerificationBadge } from '../common/VerificationBadge';
 
-// Helper component to center map on selection
 const MapController: React.FC<{ center: [number, number]; zoom: number }> = ({ center, zoom }) => {
   const map = useMap();
   React.useEffect(() => {
@@ -32,7 +29,6 @@ const MapController: React.FC<{ center: [number, number]; zoom: number }> = ({ c
   return null;
 };
 
-// Custom SVG map icons
 const createCustomIcon = (color: string, iconHtml: string) => {
   return L.divIcon({
     className: 'custom-leaflet-marker',
@@ -60,18 +56,15 @@ const createCustomIcon = (color: string, iconHtml: string) => {
 
 export const CitizenMap: React.FC = () => {
   const { riskZones, incidents, shelters, activeZone, setActiveZone, setSelectedIncident } = useEmergency();
-  const weatherLayerId = useId();
-  const roadLayerId = useId();
 
   // Layer toggles
   const [showRiskZones, setShowRiskZones] = useState(true);
   const [showIncidents, setShowIncidents] = useState(true);
   const [showShelters, setShowShelters] = useState(true);
-  const [showWeatherRadar, setShowWeatherRadar] = useState(true);
-  const [showRoads, setShowRoads] = useState(true);
 
-  // Selected Item for Inspection Drawer
-  const [inspectedZone, setInspectedZone] = useState<RiskZone | null>(riskZones[0] || null);
+  // Selected item for slide-out inspection panel
+  const [inspectedZone, setInspectedZone] = useState<RiskZone | null>(activeZone || riskZones[0] || null);
+  const [isDrawerOpen, setIsDrawerOpen] = useState(true);
 
   const [mapCenter, setMapCenter] = useState<[number, number]>([30.6558, 79.0321]);
   const [mapZoom, setMapZoom] = useState(11);
@@ -86,21 +79,31 @@ export const CitizenMap: React.FC = () => {
   const handleSelectZone = (zone: RiskZone) => {
     setInspectedZone(zone);
     setActiveZone(zone);
+    setIsDrawerOpen(true);
     setMapCenter([zone.coordinates.lat, zone.coordinates.lng]);
     setMapZoom(12);
   };
 
+  const resetToUserLocation = () => {
+    setMapCenter([30.6558, 79.0321]);
+    setMapZoom(11);
+  };
+
   return (
-    <div className="relative w-full h-[calc(100vh-8rem)] md:h-[calc(100vh-6.5rem)] rounded-2xl overflow-hidden border border-slate-800 bg-alpine-950 flex flex-col md:flex-row shadow-2xl">
+    <div className="relative w-full h-[calc(100vh-8.5rem)] md:h-[calc(100vh-6.5rem)] rounded-2xl overflow-hidden border border-slate-800 bg-alpine-950 flex flex-col md:flex-row shadow-2xl">
       
-      {/* Map Control Bar (Floating on Top Left) */}
+      {/* Floating Layer Controls (Top Left) */}
       <div className="absolute top-4 left-4 z-[400] flex flex-wrap gap-2 max-w-[90vw]">
-        <div className="flex items-center gap-1.5 p-1.5 rounded-xl bg-alpine-950/90 border border-slate-700/80 shadow-2xl backdrop-blur-md">
+        <div className="flex items-center gap-1.5 p-1.5 rounded-xl bg-alpine-950/95 border border-slate-700/90 shadow-2xl backdrop-blur-md">
+          
           <button
             onClick={() => setShowRiskZones(!showRiskZones)}
-            className={`px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition ${
-              showRiskZones ? 'bg-red-500/20 text-red-300 border border-red-500/40' : 'text-slate-400 hover:text-white'
+            className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition ${
+              showRiskZones
+                ? 'bg-red-500/20 text-red-300 border border-red-500/40 shadow-sm'
+                : 'text-slate-400 hover:text-white'
             }`}
+            aria-pressed={showRiskZones}
           >
             <ShieldAlert className="w-3.5 h-3.5" />
             <span>Risk Zones</span>
@@ -108,9 +111,12 @@ export const CitizenMap: React.FC = () => {
 
           <button
             onClick={() => setShowIncidents(!showIncidents)}
-            className={`px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition ${
-              showIncidents ? 'bg-orange-500/20 text-orange-300 border border-orange-500/40' : 'text-slate-400 hover:text-white'
+            className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition ${
+              showIncidents
+                ? 'bg-orange-500/20 text-orange-300 border border-orange-500/40 shadow-sm'
+                : 'text-slate-400 hover:text-white'
             }`}
+            aria-pressed={showIncidents}
           >
             <AlertTriangle className="w-3.5 h-3.5" />
             <span>Incidents</span>
@@ -118,24 +124,26 @@ export const CitizenMap: React.FC = () => {
 
           <button
             onClick={() => setShowShelters(!showShelters)}
-            className={`px-2.5 py-1 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition ${
-              showShelters ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : 'text-slate-400 hover:text-white'
+            className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition ${
+              showShelters
+                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm'
+                : 'text-slate-400 hover:text-white'
             }`}
+            aria-pressed={showShelters}
           >
             <Building2 className="w-3.5 h-3.5" />
             <span>Shelters</span>
           </button>
 
           <button
-            onClick={() => {
-              setMapCenter([30.6558, 79.0321]);
-              setMapZoom(11);
-            }}
+            onClick={resetToUserLocation}
             className="p-1.5 rounded-lg text-slate-300 hover:text-white hover:bg-slate-800 transition"
-            title="Reset to User Location"
+            title="Recenter Map to User Location"
+            aria-label="Recenter Map to User Location"
           >
-            <Navigation className="w-3.5 h-3.5" />
+            <Navigation className="w-4 h-4 text-sky-400" />
           </button>
+
         </div>
       </div>
 
@@ -149,15 +157,32 @@ export const CitizenMap: React.FC = () => {
         >
           <MapController center={mapCenter} zoom={mapZoom} />
 
-          {/* High-Contrast Alpine CartoDB Dark/Terrain Layer */}
+          {/* Clean terrain map tiles */}
           <TileLayer
-            attribution='&copy; <a href="https://carto.com/">CARTO</a> & OpenTopo'
+            attribution='&copy; <a href="https://carto.com/">CARTO</a> & OpenStreetMap'
             url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
           />
 
-          {/* Render Risk Area Buffer Circles */}
+          {/* User Location Marker */}
+          <Marker
+            position={[30.6558, 79.0321]}
+            icon={createCustomIcon(
+              '#0284C7',
+              `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg>`
+            )}
+          >
+            <Popup>
+              <div className="p-2 text-xs space-y-1">
+                <div className="font-bold text-sky-400 font-mono">YOUR POSITION</div>
+                <div className="text-white font-semibold">Kedarnath Valley (3,583m)</div>
+                <div className="text-[10px] text-slate-300 font-mono">30.6558° N, 79.0321° E</div>
+              </div>
+            </Popup>
+          </Marker>
+
+          {/* Risk Area Buffer Circles & Markers */}
           {showRiskZones &&
-            riskZones.map(zone => (
+            riskZones.map((zone) => (
               <React.Fragment key={zone.id}>
                 <Circle
                   center={[zone.coordinates.lat, zone.coordinates.lng]}
@@ -165,7 +190,7 @@ export const CitizenMap: React.FC = () => {
                   pathOptions={{
                     color: riskColors[zone.level],
                     fillColor: riskColors[zone.level],
-                    fillOpacity: zone.level === 'EMERGENCY' ? 0.28 : 0.15,
+                    fillOpacity: zone.level === 'EMERGENCY' ? 0.25 : 0.15,
                     weight: 2,
                     dashArray: zone.level === 'EMERGENCY' ? '6, 6' : undefined,
                   }}
@@ -192,7 +217,7 @@ export const CitizenMap: React.FC = () => {
                       <div className="text-slate-300 text-[11px]">{zone.primaryHazard}</div>
                       <button
                         onClick={() => handleSelectZone(zone)}
-                        className="w-full py-1 rounded bg-shield-blue text-white font-semibold text-center text-xs mt-1"
+                        className="w-full py-1.5 rounded bg-sky-600 hover:bg-sky-500 text-white font-semibold text-center text-xs mt-1 transition"
                       >
                         Inspect Risk Factors
                       </button>
@@ -202,9 +227,9 @@ export const CitizenMap: React.FC = () => {
               </React.Fragment>
             ))}
 
-          {/* Render Active Incidents */}
+          {/* Active Incidents Markers */}
           {showIncidents &&
-            incidents.map(incident => (
+            incidents.map((incident) => (
               <Marker
                 key={incident.id}
                 position={[incident.coordinates.lat, incident.coordinates.lng]}
@@ -219,19 +244,19 @@ export const CitizenMap: React.FC = () => {
                 <Popup>
                   <div className="p-3 space-y-2 text-xs max-w-xs">
                     <div className="flex items-center justify-between gap-2">
-                      <span className="font-mono text-red-400 font-bold">{incident.id}</span>
-                      <VerificationBadge state={incident.verificationState} />
+                      <span className="font-mono text-red-400 font-bold">{incident.type}</span>
+                      <VerificationBadge state={incident.verificationState} size="sm" />
                     </div>
-                    <div className="font-bold text-white">{incident.title}</div>
+                    <div className="font-bold text-white text-xs">{incident.title}</div>
                     <div className="text-slate-300 text-[11px]">{incident.description}</div>
                   </div>
                 </Popup>
               </Marker>
             ))}
 
-          {/* Render Safe Shelters */}
+          {/* Safe Shelters Markers */}
           {showShelters &&
-            shelters.map(shelter => (
+            shelters.map((shelter) => (
               <Marker
                 key={shelter.id}
                 position={[shelter.coordinates.lat, shelter.coordinates.lng]}
@@ -257,9 +282,12 @@ export const CitizenMap: React.FC = () => {
         </MapContainer>
       </div>
 
-      {/* RISK EXPLANATION PANEL (Why is this area risky?) */}
-      {inspectedZone && (
-        <div className="w-full md:w-96 bg-alpine-900 border-t md:border-t-0 md:border-l border-slate-800 p-5 overflow-y-auto z-10 flex flex-col justify-between shrink-0 shadow-2xl">
+      {/* Slide-out / Bottom Risk Inspection Drawer */}
+      {inspectedZone && isDrawerOpen && (
+        <aside 
+          className="w-full md:w-96 bg-alpine-900 border-t md:border-t-0 md:border-l border-slate-800 p-5 overflow-y-auto z-10 flex flex-col justify-between shrink-0 shadow-2xl max-h-80 md:max-h-full"
+          aria-label="Sector Risk Analysis Details"
+        >
           <div className="space-y-4">
             
             {/* Header */}
@@ -268,96 +296,113 @@ export const CitizenMap: React.FC = () => {
                 <div className="text-[10px] font-mono uppercase tracking-widest text-slate-400">
                   SECTOR RISK INTELLIGENCE
                 </div>
-                <h3 className="text-base font-bold text-white mt-0.5">{inspectedZone.name}</h3>
+                <h2 className="text-base font-bold text-white mt-0.5">{inspectedZone.name}</h2>
                 <div className="text-xs text-slate-400">{inspectedZone.region}</div>
               </div>
-              <RiskBadge level={inspectedZone.level} showScore={inspectedZone.score} size="sm" />
+              <div className="flex items-center gap-1.5">
+                <RiskBadge level={inspectedZone.level} showScore={inspectedZone.score} size="sm" />
+                <button
+                  onClick={() => setIsDrawerOpen(false)}
+                  className="p-1 rounded text-slate-400 hover:text-white md:hidden"
+                  aria-label="Close Inspection Panel"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
             </div>
 
-            {/* Crucial Distinction Warning */}
+            {/* Crucial Distinction Note */}
             <div className="p-2.5 rounded-lg bg-slate-800/80 border border-slate-700 text-[11px] text-slate-300 flex items-start gap-2">
               <Info className="w-4 h-4 text-sky-400 shrink-0 mt-0.5" />
               <div>
-                <strong className="text-sky-300">PeakShield Intelligence Note:</strong> Predicted Risk is calculated via multi-source sensor fusion. It does not automatically represent a confirmed mass emergency.
+                <strong className="text-sky-300">PeakShield Intelligence Note:</strong> Multi-sensor hazard projection indicates high risk. Follow safety precautions below.
               </div>
             </div>
 
-            {/* "Why is this area risky?" Detailed Factors */}
+            {/* Why is this area risky? Detailed Factors */}
             <div className="space-y-2.5">
-              <h4 className="text-xs font-mono font-bold text-slate-400 uppercase tracking-wider">
+              <h3 className="text-xs font-mono font-bold text-slate-400 uppercase tracking-wider">
                 Why is this area risky?
-              </h4>
+              </h3>
               
               <div className="space-y-2">
                 
                 {/* Factor 1: Rainfall */}
-                <div className="p-2.5 rounded-lg bg-slate-800/40 border border-slate-700/60">
+                <div className="p-2.5 rounded-lg bg-slate-800/50 border border-slate-700/60">
                   <div className="flex justify-between text-xs mb-1">
                     <span className="text-slate-300">24h Accumulated Rainfall</span>
-                    <span className="font-mono font-bold text-red-400">{inspectedZone.factors.rainfallMm24h} mm</span>
+                    <span className="font-mono font-bold text-red-400">
+                      {inspectedZone.factors.rainfallMm24h} mm
+                    </span>
                   </div>
                   <div className="w-full bg-slate-700 h-1.5 rounded-full overflow-hidden">
                     <div
                       className="bg-red-500 h-full rounded-full"
                       style={{ width: `${Math.min(100, (inspectedZone.factors.rainfallMm24h / 80) * 100)}%` }}
-                    ></div>
+                    />
                   </div>
                 </div>
 
                 {/* Factor 2: Landslide Susceptibility */}
-                <div className="p-2.5 rounded-lg bg-slate-800/40 border border-slate-700/60">
+                <div className="p-2.5 rounded-lg bg-slate-800/50 border border-slate-700/60">
                   <div className="flex justify-between text-xs mb-1">
                     <span className="text-slate-300">Slope Slip & Landslide Index</span>
-                    <span className="font-mono font-bold text-orange-400">{inspectedZone.factors.landslideSusceptibilityScore}%</span>
+                    <span className="font-mono font-bold text-orange-400">
+                      {inspectedZone.factors.landslideSusceptibilityScore}%
+                    </span>
                   </div>
                   <div className="w-full bg-slate-700 h-1.5 rounded-full overflow-hidden">
                     <div
                       className="bg-orange-500 h-full rounded-full"
                       style={{ width: `${inspectedZone.factors.landslideSusceptibilityScore}%` }}
-                    ></div>
+                    />
                   </div>
                 </div>
 
                 {/* Factor 3: Slope Angle */}
-                <div className="p-2.5 rounded-lg bg-slate-800/40 border border-slate-700/60 flex items-center justify-between text-xs">
+                <div className="p-2.5 rounded-lg bg-slate-800/50 border border-slate-700/60 flex items-center justify-between text-xs">
                   <span className="text-slate-300">Terrain Slope Angle</span>
-                  <span className="font-mono font-bold text-white">{inspectedZone.factors.slopeAngleDegrees}° Steep Scree</span>
+                  <span className="font-mono font-bold text-white">
+                    {inspectedZone.factors.slopeAngleDegrees}° Scree Slope
+                  </span>
                 </div>
 
                 {/* Factor 4: Road Passability */}
-                <div className="p-2.5 rounded-lg bg-slate-800/40 border border-slate-700/60 flex items-center justify-between text-xs">
-                  <span className="text-slate-300">Road & Trail Passability</span>
-                  <span className={`font-mono font-bold ${inspectedZone.factors.roadPassabilityPercent < 30 ? 'text-red-400' : 'text-emerald-400'}`}>
-                    {inspectedZone.factors.roadPassabilityPercent}% Open
+                <div className="p-2.5 rounded-lg bg-slate-800/50 border border-slate-700/60 flex items-center justify-between text-xs">
+                  <span className="text-slate-300">Road Passability</span>
+                  <span className={`font-mono font-bold ${
+                    inspectedZone.factors.roadPassabilityPercent < 30 ? 'text-red-400' : 'text-emerald-400'
+                  }`}>
+                    {inspectedZone.factors.roadPassabilityPercent}% Passable
                   </span>
                 </div>
 
               </div>
             </div>
 
-            {/* Scientific Explanation */}
-            <div className="space-y-1.5 text-xs">
-              <div className="font-bold text-slate-200">Analysis Explanation:</div>
-              <p className="text-slate-300 leading-relaxed text-[11px] bg-alpine-950 p-3 rounded-lg border border-slate-800">
+            {/* Explanation */}
+            <div className="space-y-1 text-xs">
+              <div className="font-bold text-slate-200">Analysis Summary:</div>
+              <p className="text-slate-300 leading-relaxed text-[11px] bg-alpine-950 p-2.5 rounded-lg border border-slate-800">
                 {inspectedZone.explanation}
               </p>
             </div>
 
-            {/* Actionable Safety Advice */}
-            <div className="space-y-1.5 text-xs">
+            {/* Recommended Action */}
+            <div className="space-y-1 text-xs">
               <div className="font-bold text-emerald-400 flex items-center gap-1.5">
                 <CheckCircle2 className="w-4 h-4" />
                 <span>Recommended Action:</span>
               </div>
-              <p className="text-slate-300 text-[11px] bg-emerald-950/20 p-2.5 rounded-lg border border-emerald-800/30">
+              <p className="text-slate-300 text-[11px] bg-emerald-950/30 p-2.5 rounded-lg border border-emerald-800/40">
                 {inspectedZone.recommendedAction}
               </p>
             </div>
 
           </div>
 
-          {/* Provenance & Confidence */}
-          <div className="pt-4 mt-4 border-t border-slate-800 text-[10px] font-mono text-slate-400 space-y-1">
+          {/* Provenance */}
+          <div className="pt-3 mt-3 border-t border-slate-800 text-[10px] font-mono text-slate-400 space-y-1">
             <div className="flex justify-between">
               <span>Source:</span>
               <span className="text-slate-300 truncate max-w-[180px]">{inspectedZone.source}</span>
@@ -366,13 +411,9 @@ export const CitizenMap: React.FC = () => {
               <span>Confidence:</span>
               <span className="text-emerald-400 font-bold">{inspectedZone.confidencePercent}%</span>
             </div>
-            <div className="flex justify-between">
-              <span>Updated:</span>
-              <span className="text-slate-300">{inspectedZone.lastUpdated}</span>
-            </div>
           </div>
 
-        </div>
+        </aside>
       )}
 
     </div>

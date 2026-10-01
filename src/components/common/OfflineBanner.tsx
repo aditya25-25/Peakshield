@@ -1,42 +1,47 @@
 import React from 'react';
-import { WifiOff, BookOpen, RefreshCw } from 'lucide-react';
+import { WifiOff, Clock, BookOpen, RefreshCw } from 'lucide-react';
 import { useEmergency } from '../../context/EmergencyContext';
 
 export const OfflineBanner: React.FC = () => {
-  const { isOnline, lastSyncTime, openOfflineGuide, refreshData } = useEmergency();
+  const { isOnline, lastSyncTime, openOfflineGuideModal, refreshData } = useEmergency();
 
   if (isOnline) return null;
 
   return (
-    <aside aria-label="Offline Mode Notification" className="bg-amber-950/90 border-b border-amber-600/40 text-amber-200 px-4 py-2.5 text-xs sm:text-sm backdrop-blur-md sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <span className="p-1 bg-amber-500/20 rounded text-amber-400">
-            <WifiOff className="w-4 h-4" />
-          </span>
-          <div>
-            <span className="font-semibold text-white tracking-wide">OFFLINE MODE ACTIVE</span>
-            <span className="text-amber-300/80 mx-2 hidden sm:inline">•</span>
-            <span className="text-amber-300/80 text-xs">Displaying cached intelligence. Last sync: {lastSyncTime}</span>
-          </div>
-        </div>
+    <aside
+      role="status"
+      aria-label="Offline Mode Notice"
+      className="w-full bg-amber-950/90 border-b border-amber-500/40 text-amber-200 px-4 py-2 text-xs flex flex-wrap items-center justify-between gap-2 shadow-lg"
+    >
+      <div className="flex items-center gap-2">
+        <WifiOff className="w-4 h-4 text-amber-400 shrink-0" aria-hidden="true" />
+        <span className="font-semibold">
+          Offline Mode Active
+        </span>
+        <span className="hidden sm:inline text-amber-300/80">•</span>
+        <span className="hidden sm:inline text-amber-300/90 flex items-center gap-1">
+          <Clock className="w-3.5 h-3.5 inline" />
+          Showing cached safety data (Last synced: {lastSyncTime})
+        </span>
+      </div>
 
-        <div className="flex items-center gap-2">
-          <button
-            onClick={openOfflineGuide}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-amber-500/20 hover:bg-amber-500/30 text-amber-100 font-medium transition border border-amber-500/30 text-xs"
-          >
-            <BookOpen className="w-3.5 h-3.5" />
-            <span>Emergency Protocols</span>
-          </button>
-          <button
-            onClick={() => refreshData()}
-            className="p-1 rounded bg-amber-500/10 hover:bg-amber-500/20 text-amber-200 transition"
-            title="Retry connection"
-          >
-            <RefreshCw className="w-3.5 h-3.5" />
-          </button>
-        </div>
+      <div className="flex items-center gap-2">
+        <button
+          onClick={openOfflineGuideModal}
+          className="px-2.5 py-1 rounded bg-amber-900/60 hover:bg-amber-800/80 border border-amber-500/50 text-amber-100 text-[11px] font-medium flex items-center gap-1 transition"
+        >
+          <BookOpen className="w-3.5 h-3.5" />
+          <span>Offline Survival Guide</span>
+        </button>
+
+        <button
+          onClick={() => refreshData()}
+          className="p-1 rounded bg-amber-900/60 hover:bg-amber-800/80 border border-amber-500/50 text-amber-200 text-[11px] transition"
+          title="Attempt Reconnect"
+          aria-label="Attempt Reconnect"
+        >
+          <RefreshCw className="w-3.5 h-3.5" />
+        </button>
       </div>
     </aside>
   );

@@ -1,33 +1,28 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from 'react';
 import { 
   X, 
   BookOpen, 
   Mountain, 
-  Flame, 
   ThermometerSnowflake, 
-  PhoneCall, 
-  Radio, 
-  Compass, 
-  Download,
-  CheckCircle
+  Droplets, 
+  Radio
 } from 'lucide-react';
 import { useEmergency } from '../../context/EmergencyContext';
 
 export const OfflineGuideModal: React.FC = () => {
-  const { isOfflineGuideOpen, closeOfflineGuide, shelters } = useEmergency();
-  const [activeSection, setActiveSection] = useState<'landslide' | 'hypothermia' | 'flood' | 'contacts'>('landslide');
-  const [isCached, setIsCached] = useState(false);
+  const { isOfflineGuideModalOpen, closeOfflineGuideModal } = useEmergency();
+  const [activeTopic, setActiveTopic] = useState<'landslide' | 'hypothermia' | 'flood' | 'radio'>('landslide');
 
-  if (!isOfflineGuideOpen) return null;
-
-  const handleCache = () => {
-    setIsCached(true);
-    setTimeout(() => setIsCached(false), 3000);
-  };
+  if (!isOfflineGuideModalOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="relative w-full max-w-3xl bg-alpine-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-in fade-in duration-200"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="offline-guide-title"
+    >
+      <div className="relative w-full max-w-2xl bg-alpine-900 border border-slate-700 rounded-2xl shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
         
         {/* Header */}
         <div className="px-6 py-4 border-b border-slate-800 bg-alpine-950 flex items-center justify-between">
@@ -36,188 +31,203 @@ export const OfflineGuideModal: React.FC = () => {
               <BookOpen className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-white tracking-wide">
-                Offline Mountain Survival & Intelligence Manual
+              <h2 id="offline-guide-title" className="text-base font-bold text-white tracking-wide">
+                Pre-Cached Offline Survival Guide
               </h2>
-              <p className="text-xs text-amber-300/80">
-                Guaranteed offline access without cellular data or internet connectivity
+              <p className="text-xs text-slate-400">
+                Accessible without cellular network or satellite data
               </p>
             </div>
           </div>
           <button
-            onClick={closeOfflineGuide}
+            onClick={closeOfflineGuideModal}
             className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition"
+            aria-label="Close Offline Guide"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Tab Selector */}
-        <div className="flex border-b border-slate-800 bg-alpine-950/60 overflow-x-auto text-xs font-semibold">
-          {[
-            { id: 'landslide', label: 'Landslide & Rockfall', icon: Mountain },
-            { id: 'hypothermia', label: 'Hypothermia & Blizzard', icon: ThermometerSnowflake },
-            { id: 'flood', label: 'Flash Flood & Streams', icon: Flame },
-            { id: 'contacts', label: 'Emergency Radios & SOS', icon: PhoneCall },
-          ].map(tab => {
-            const Icon = tab.icon;
-            return (
-              <button
-                key={tab.id}
-                onClick={() => setActiveSection(tab.id as any)}
-                className={`flex items-center gap-2 px-4 py-3 border-b-2 whitespace-nowrap transition ${
-                  activeSection === tab.id
-                    ? 'border-amber-400 text-amber-300 bg-amber-500/10'
-                    : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
-                }`}
-              >
-                <Icon className="w-4 h-4" />
-                <span>{tab.label}</span>
-              </button>
-            );
-          })}
+        {/* Topic Selection Tabs */}
+        <div className="px-6 pt-4 flex gap-2 border-b border-slate-800 overflow-x-auto">
+          <button
+            onClick={() => setActiveTopic('landslide')}
+            className={`pb-2 px-2 text-xs font-semibold border-b-2 whitespace-nowrap transition ${
+              activeTopic === 'landslide'
+                ? 'border-amber-500 text-amber-400'
+                : 'border-transparent text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            Landslides & Rockfall
+          </button>
+
+          <button
+            onClick={() => setActiveTopic('hypothermia')}
+            className={`pb-2 px-2 text-xs font-semibold border-b-2 whitespace-nowrap transition ${
+              activeTopic === 'hypothermia'
+                ? 'border-sky-500 text-sky-400'
+                : 'border-transparent text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            Hypothermia & Cold
+          </button>
+
+          <button
+            onClick={() => setActiveTopic('flood')}
+            className={`pb-2 px-2 text-xs font-semibold border-b-2 whitespace-nowrap transition ${
+              activeTopic === 'flood'
+                ? 'border-blue-500 text-blue-400'
+                : 'border-transparent text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            Flash Floods & Rivers
+          </button>
+
+          <button
+            onClick={() => setActiveTopic('radio')}
+            className={`pb-2 px-2 text-xs font-semibold border-b-2 whitespace-nowrap transition ${
+              activeTopic === 'radio'
+                ? 'border-emerald-500 text-emerald-400'
+                : 'border-transparent text-slate-400 hover:text-slate-200'
+            }`}
+          >
+            SOS Radio & Whistle
+          </button>
         </div>
 
-        {/* Content Area */}
-        <div className="p-6 overflow-y-auto space-y-4 text-xs text-slate-300 leading-relaxed">
+        {/* Content View */}
+        <div className="p-6 overflow-y-auto space-y-4 text-xs text-slate-200">
           
-          {activeSection === 'landslide' && (
+          {activeTopic === 'landslide' && (
             <div className="space-y-4">
-              <div className="p-4 rounded-xl bg-amber-950/30 border border-amber-600/30">
-                <h4 className="text-sm font-bold text-amber-300 mb-2">Immediate Action During Rockfall or Debris Slide</h4>
-                <ul className="list-disc pl-5 space-y-1.5 text-slate-200">
-                  <li><strong>Listen for warning sounds:</strong> Rumbling, cracking trees, sudden trickling stones or rapid discolored mud streams precede large slope slides by 30-90 seconds.</li>
-                  <li><strong>Run perpendicular to the flow:</strong> Never run downhill in the path of the landslide. Move sideways up onto stable rock shoulders.</li>
-                  <li><strong>If trapped inside a shelter:</strong> Curl beneath sturdy furniture or against interior reinforced walls. Cover your head and chest.</li>
-                  <li><strong>Post-slide awareness:</strong> Do not cross freshly fallen mud debris. Secondary slides occur frequently within 2 hours.</li>
-                </ul>
-              </div>
-
-              <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-700">
-                <h4 className="text-sm font-bold text-sky-300 mb-1">Terrain Warning Signs to Watch For</h4>
-                <p className="text-slate-400 mb-2">Noticeable tilt in pine trees or utility poles, new cracks appearing in soil or rock faces, or sudden muddy water appearing from clear mountain springs.</p>
-              </div>
-            </div>
-          )}
-
-          {activeSection === 'hypothermia' && (
-            <div className="space-y-4">
-              <div className="p-4 rounded-xl bg-sky-950/30 border border-sky-600/30">
-                <h4 className="text-sm font-bold text-sky-300 mb-2">Triage & Management for Severe Cold & Hypothermia</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
-                  <div className="p-3 bg-slate-900/60 rounded-lg border border-slate-800">
-                    <span className="font-mono text-amber-400 font-bold">Stage 1 (Mild: 35-32°C)</span>
-                    <p className="text-slate-300 mt-1">Violent shivering, slurred speech, clumsy fingers. Action: Strip wet gear, don dry thermal layers, consume hot sugary fluids.</p>
-                  </div>
-                  <div className="p-3 bg-slate-900/60 rounded-lg border border-slate-800">
-                    <span className="font-mono text-red-400 font-bold">Stage 2/3 (Severe: &lt;32°C)</span>
-                    <p className="text-slate-300 mt-1">Shivering stops, apathy, confusion, paradoxical undressing. Action: Passive external rewarming in sleeping bag with vapor barrier, call SOS.</p>
-                  </div>
+              <div className="p-4 rounded-xl bg-amber-950/30 border border-amber-500/40 space-y-2">
+                <div className="font-bold text-amber-300 flex items-center gap-1.5">
+                  <Mountain className="w-4 h-4" />
+                  <span>Landslide & Debris Flow Survival</span>
                 </div>
+                <p className="text-slate-300 leading-relaxed">
+                  If you hear a distant rumbling sound or notice small rocks trickling down the slabs:
+                </p>
               </div>
 
-              <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-700">
-                <h4 className="text-sm font-bold text-white mb-2">Emergency Blizzard Bivouac Procedure</h4>
-                <p>Construct a snow-cave or lee-side windbreak behind large glacial boulders. Insulate your body from the ground using sleeping pads and empty backpacks.</p>
-              </div>
+              <ul className="space-y-3">
+                <li className="p-3 rounded-xl bg-slate-800/60 border border-slate-700 flex items-start gap-3">
+                  <div className="w-5 h-5 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold shrink-0">1</div>
+                  <div>
+                    <strong className="text-white">Move Perpendicular to the Slide Path:</strong>
+                    <p className="text-slate-300 mt-0.5">Never run downhill ahead of mud or rocks. Run laterally to either side onto rock promontories.</p>
+                  </div>
+                </li>
+
+                <li className="p-3 rounded-xl bg-slate-800/60 border border-slate-700 flex items-start gap-3">
+                  <div className="w-5 h-5 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center font-bold shrink-0">2</div>
+                  <div>
+                    <strong className="text-white">Shelter Behind Solid Bedrock:</strong>
+                    <p className="text-slate-300 mt-0.5">If trapped, curl into a tight ball, protect your head with your rugged backpack, and wedge behind large boulders.</p>
+                  </div>
+                </li>
+              </ul>
             </div>
           )}
 
-          {activeSection === 'flood' && (
+          {activeTopic === 'hypothermia' && (
             <div className="space-y-4">
-              <div className="p-4 rounded-xl bg-red-950/30 border border-red-600/30">
-                <h4 className="text-sm font-bold text-red-300 mb-2">Glacial Outburst & Flash Flood Survival</h4>
-                <ul className="list-disc pl-5 space-y-1.5 text-slate-200">
-                  <li><strong>Climb immediately:</strong> Gain at least 30-50 vertical meters above the riverbed or stream channel.</li>
-                  <li><strong>Never wade in fast-moving water:</strong> Water moving at 15 km/h will knock down an adult in ankle-deep levels.</li>
-                  <li><strong>Stay off footbridges:</strong> Temporary suspension or timber bridges can collapse instantly under hydraulic debris loads.</li>
-                </ul>
+              <div className="p-4 rounded-xl bg-sky-950/30 border border-sky-500/40 space-y-2">
+                <div className="font-bold text-sky-300 flex items-center gap-1.5">
+                  <ThermometerSnowflake className="w-4 h-4" />
+                  <span>Exposure & Hypothermia Management</span>
+                </div>
+                <p className="text-slate-300 leading-relaxed">
+                  Wind chill plummets core body temperature within 30 minutes if clothes are soaked.
+                </p>
               </div>
+
+              <ul className="space-y-3">
+                <li className="p-3 rounded-xl bg-slate-800/60 border border-slate-700 flex items-start gap-3">
+                  <div className="w-5 h-5 rounded-full bg-sky-500/20 text-sky-400 flex items-center justify-center font-bold shrink-0">1</div>
+                  <div>
+                    <strong className="text-white">Block Wind & Swap Wet Layers:</strong>
+                    <p className="text-slate-300 mt-0.5">Swap wet cotton for merino wool or synthetic fleece. Wrap in space blankets.</p>
+                  </div>
+                </li>
+
+                <li className="p-3 rounded-xl bg-slate-800/60 border border-slate-700 flex items-start gap-3">
+                  <div className="w-5 h-5 rounded-full bg-sky-500/20 text-sky-400 flex items-center justify-center font-bold shrink-0">2</div>
+                  <div>
+                    <strong className="text-white">Insulate from Frozen Ground:</strong>
+                    <p className="text-slate-300 mt-0.5">Sit on your backpack or dry fir branches to prevent conductive heat loss.</p>
+                  </div>
+                </li>
+              </ul>
             </div>
           )}
 
-          {activeSection === 'contacts' && (
+          {activeTopic === 'radio' && (
             <div className="space-y-4">
-              <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-700">
-                <h4 className="text-sm font-bold text-emerald-400 mb-3 flex items-center gap-1.5">
+              <div className="p-4 rounded-xl bg-emerald-950/30 border border-emerald-500/40 space-y-2">
+                <div className="font-bold text-emerald-300 flex items-center gap-1.5">
                   <Radio className="w-4 h-4" />
-                  Himalayan Emergency VHF/UHF Radio Frequencies
-                </h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 font-mono text-[11px]">
-                  <div className="p-2.5 rounded bg-slate-900 border border-slate-800">
-                    <div className="text-slate-400">International SAR Distress:</div>
-                    <div className="text-emerald-400 font-bold text-xs">VHF 156.800 MHz (Ch 16)</div>
-                  </div>
-                  <div className="p-2.5 rounded bg-slate-900 border border-slate-800">
-                    <div className="text-slate-400">Garhwal SDRF Ops:</div>
-                    <div className="text-emerald-400 font-bold text-xs">VHF 144.150 MHz</div>
-                  </div>
-                  <div className="p-2.5 rounded bg-slate-900 border border-slate-800">
-                    <div className="text-slate-400">ITBP Mountain Post:</div>
-                    <div className="text-emerald-400 font-bold text-xs">VHF 162.400 MHz</div>
-                  </div>
-                  <div className="p-2.5 rounded bg-slate-900 border border-slate-800">
-                    <div className="text-slate-400">Manali Rescue Squad:</div>
-                    <div className="text-emerald-400 font-bold text-xs">VHF 145.500 MHz</div>
-                  </div>
+                  <span>Alpine Radio & Distress Signals</span>
                 </div>
+                <p className="text-slate-300 leading-relaxed">
+                  In all Himalayan regions, maintain these standard monitored frequencies:
+                </p>
               </div>
 
-              <div className="p-4 rounded-xl bg-slate-800/40 border border-slate-700">
-                <h4 className="text-sm font-bold text-white mb-2 flex items-center gap-1.5">
-                  <PhoneCall className="w-4 h-4 text-sky-400" />
-                  National Emergency Helplines (Satellite / Landline)
-                </h4>
-                <ul className="space-y-2 text-xs">
-                  <li className="flex justify-between border-b border-slate-800 pb-1">
-                    <span className="text-slate-300">National Disaster Response Force (NDRF):</span>
-                    <span className="font-mono text-sky-400 font-bold">1078 / +91-11-24363260</span>
-                  </li>
-                  <li className="flex justify-between border-b border-slate-800 pb-1">
-                    <span className="text-slate-300">Uttarakhand State SEOC Helpline:</span>
-                    <span className="font-mono text-sky-400 font-bold">1070 / +91-135-2710334</span>
-                  </li>
-                  <li className="flex justify-between">
-                    <span className="text-slate-300">Himachal SEOC Emergency:</span>
-                    <span className="font-mono text-sky-400 font-bold">1070 / +91-177-2812344</span>
-                  </li>
-                </ul>
+              <ul className="space-y-3">
+                <li className="p-3 rounded-xl bg-slate-800/60 border border-slate-700 flex items-start gap-3">
+                  <div className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold shrink-0">1</div>
+                  <div>
+                    <strong className="text-white">VHF 156.800 MHz (Channel 16):</strong>
+                    <p className="text-slate-300 mt-0.5">Monitored by SDRF, NDRF, and Army command posts every 20 minutes past the hour.</p>
+                  </div>
+                </li>
+
+                <li className="p-3 rounded-xl bg-slate-800/60 border border-slate-700 flex items-start gap-3">
+                  <div className="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold shrink-0">2</div>
+                  <div>
+                    <strong className="text-white">6 Whistle Blasts / Minute Standard:</strong>
+                    <p className="text-slate-300 mt-0.5">6 sharp blasts, followed by 1 minute of silence. Answer from rescuers is 3 blasts per minute.</p>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          )}
+
+          {activeTopic === 'flood' && (
+            <div className="space-y-4">
+              <div className="p-4 rounded-xl bg-blue-950/30 border border-blue-500/40 space-y-2">
+                <div className="font-bold text-blue-300 flex items-center gap-1.5">
+                  <Droplets className="w-4 h-4" />
+                  <span>Flash Flood & River Crossing</span>
+                </div>
+                <p className="text-slate-300 leading-relaxed">
+                  Water surges can rise 2-4 meters within 5 minutes during glacial lake outbursts (GLOF) or cloudbursts.
+                </p>
               </div>
+
+              <ul className="space-y-3">
+                <li className="p-3 rounded-xl bg-slate-800/60 border border-slate-700 flex items-start gap-3">
+                  <div className="w-5 h-5 rounded-full bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold shrink-0">1</div>
+                  <div>
+                    <strong className="text-white">Climb at least 50 Meters Above River Bed:</strong>
+                    <p className="text-slate-300 mt-0.5">Do not wait to confirm water color. Move up ridges immediately.</p>
+                  </div>
+                </li>
+              </ul>
             </div>
           )}
 
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-3 border-t border-slate-800 bg-alpine-950 flex flex-wrap items-center justify-between gap-3 text-xs">
-          <div className="text-slate-400 flex items-center gap-2">
-            <Compass className="w-4 h-4 text-amber-400" />
-            <span>Encrypted local PWA offline storage active</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={handleCache}
-              className="px-3.5 py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 font-semibold border border-amber-500/40 flex items-center gap-1.5 transition"
-            >
-              {isCached ? (
-                <>
-                  <CheckCircle className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Manual Cached Offline!</span>
-                </>
-              ) : (
-                <>
-                  <Download className="w-3.5 h-3.5" />
-                  <span>Cache to Device</span>
-                </>
-              )}
-            </button>
-            <button
-              onClick={closeOfflineGuide}
-              className="px-4 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 font-medium transition"
-            >
-              Close
-            </button>
-          </div>
+        <div className="px-6 py-3 border-t border-slate-800 bg-alpine-950 flex justify-end">
+          <button
+            onClick={closeOfflineGuideModal}
+            className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs transition"
+          >
+            Close Guide
+          </button>
         </div>
 
       </div>

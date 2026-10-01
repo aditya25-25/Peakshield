@@ -1,15 +1,10 @@
-import React, { useState, useRef, useEffect } from 'react';
+﻿import React, { useState, useRef, useEffect } from 'react';
 import { 
-  MessageSquareWarning, 
   Send, 
-  Sparkles, 
-  ShieldAlert, 
   CheckCircle2, 
-  Compass, 
   Radio, 
-  Info,
-  Clock,
-  Layers
+  Bot, 
+  User 
 } from 'lucide-react';
 import { AIChatMessage } from '../../types';
 import { api } from '../../services/api';
@@ -20,9 +15,9 @@ export const AskTheMountainAI: React.FC = () => {
     {
       id: 'welcome-msg',
       sender: 'assistant',
-      text: 'PeakShield Mountain Safety Intelligence initialized. I have live telemetry for the Garhwal, Ladakh, and Himachal mountain sectors. Ask about localized slope stability, active road blocks, shelter locations, or emergency survival protocols.',
+      text: 'PeakShield Mountain Safety Intelligence initialized. I have live telemetry for the Garhwal, Ladakh, and Himachal alpine corridors. Ask about localized slope stability, active road blocks, shelter locations, or emergency survival protocols.',
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      sources: ['PeakShield Risk Fusion Engine v3.4', 'IMD Doppler Radar Stream'],
+      sources: ['PeakShield Real-Time Risk Fusion v3.4', 'IMD Doppler Radar Stream', 'GSI Landslide Hazard Feed'],
       dataFreshness: 'Real-time telemetry (Synced)'
     }
   ]);
@@ -58,16 +53,16 @@ export const AskTheMountainAI: React.FC = () => {
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     };
 
-    setMessages(prev => [...prev, userMessage]);
+    setMessages((prev) => [...prev, userMessage]);
     if (!queryText) setInput('');
     setLoading(true);
 
     try {
       const response = await api.queryAI(textToSend, 'citizen');
-      setMessages(prev => [...prev, response]);
+      setMessages((prev) => [...prev, response]);
     } catch (err) {
       console.error('AI query error:', err);
-      setMessages(prev => [
+      setMessages((prev) => [
         ...prev,
         {
           id: `err-${Date.now()}`,
@@ -82,159 +77,166 @@ export const AskTheMountainAI: React.FC = () => {
   };
 
   return (
-    <div className="space-y-4 max-w-4xl mx-auto pb-24 md:pb-12 h-[calc(100vh-8.5rem)] md:h-[calc(100vh-7rem)] flex flex-col">
+    <div className="max-w-4xl mx-auto space-y-4 pb-24 md:pb-12 h-[calc(100vh-8.5rem)] md:h-[calc(100vh-7rem)] flex flex-col">
       
-      {/* Top Intelligence Banner */}
-      <div className="p-4 rounded-2xl bg-alpine-900 border border-slate-800 flex flex-wrap items-center justify-between gap-3 shadow-md shrink-0">
+      {/* Header Banner */}
+      <div className="p-4 rounded-2xl bg-alpine-900 border border-slate-800 flex flex-wrap items-center justify-between gap-3 shrink-0 shadow-lg">
         <div className="flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
-            <Sparkles className="w-5 h-5" />
+          <div className="p-2.5 rounded-xl bg-purple-600/20 text-purple-400 border border-purple-500/30">
+            <Bot className="w-5 h-5" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-base font-bold text-white tracking-wide">
-                Ask the Mountain
+              <h1 className="text-base font-bold text-white">
+                Ask Mountain Safety AI
               </h1>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-purple-950 text-purple-300 border border-purple-800 font-semibold">
-                AI Safety Copilot
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-purple-950 text-purple-300 border border-purple-800">
+                PeakShield Safety Core
               </span>
             </div>
             <p className="text-xs text-slate-400">
-              Context-aware mountain intelligence & survivability advice
+              Grounded on IMD radar, GSI slope stability models & live responder feeds
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2 text-xs font-mono text-slate-400">
-          <Radio className="w-3.5 h-3.5 text-emerald-400" />
-          <span>Multi-Source Fusion Active</span>
+        <div className="flex items-center gap-2 text-[11px] font-mono text-emerald-400 bg-emerald-950/60 px-2.5 py-1 rounded-lg border border-emerald-800">
+          <Radio className="w-3.5 h-3.5 animate-pulse" />
+          <span>Telemetry Active</span>
         </div>
       </div>
 
-      {/* Suggested Quick Action Pills */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-1 shrink-0">
-        <span className="text-[10px] font-mono uppercase text-slate-400 shrink-0">Quick Queries:</span>
-        {quickPrompts.map((prompt, i) => (
-          <button
-            key={i}
-            onClick={() => handleSend(prompt)}
-            disabled={loading}
-            className="px-3 py-1 rounded-full bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 text-xs whitespace-nowrap transition disabled:opacity-50"
+      {/* Chat Messages Container */}
+      <div className="flex-1 overflow-y-auto space-y-4 p-4 rounded-2xl bg-alpine-950 border border-slate-800 shadow-inner">
+        {messages.map((msg) => (
+          <div
+            key={msg.id}
+            className={`flex gap-3 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
           >
-            {prompt}
-          </button>
-        ))}
-      </div>
+            {msg.sender === 'assistant' && (
+              <div className="w-8 h-8 rounded-xl bg-purple-600/20 border border-purple-500/30 text-purple-400 flex items-center justify-center shrink-0 mt-0.5">
+                <Bot className="w-4 h-4" />
+              </div>
+            )}
 
-      {/* Conversation Thread */}
-      <div className="flex-1 bg-alpine-900/70 border border-slate-800 rounded-2xl p-4 sm:p-6 overflow-y-auto space-y-4 shadow-inner">
-        {messages.map(msg => {
-          const isUser = msg.sender === 'user';
-          return (
             <div
-              key={msg.id}
-              className={`flex flex-col ${isUser ? 'items-end' : 'items-start'} max-w-2xl ${isUser ? 'ml-auto' : 'mr-auto'}`}
+              className={`max-w-[85%] sm:max-w-xl rounded-2xl p-4 space-y-2 text-xs shadow-md ${
+                msg.sender === 'user'
+                  ? 'bg-sky-600 text-white rounded-br-none'
+                  : 'bg-alpine-900 border border-slate-700/80 text-slate-200 rounded-bl-none'
+              }`}
             >
-              <div
-                className={`p-4 rounded-2xl text-xs sm:text-sm leading-relaxed ${
-                  isUser
-                    ? 'bg-shield-blue text-white rounded-br-none shadow-md font-medium'
-                    : 'bg-slate-800/90 text-slate-100 rounded-bl-none border border-slate-700/80 shadow-lg'
-                }`}
-              >
-                {/* Assistant Risk Badge Header if applicable */}
-                {!isUser && msg.riskContext && (
-                  <div className="flex items-center justify-between gap-2 mb-2 pb-2 border-b border-slate-700/60">
-                    <span className="text-[10px] font-mono text-slate-400 uppercase font-semibold">
-                      Diagnostic Evaluation
-                    </span>
-                    <RiskBadge level={msg.riskContext.level} size="sm" />
+              {msg.riskContext && (
+                <div className="flex items-center justify-between pb-2 border-b border-slate-800">
+                  <RiskBadge level={msg.riskContext.level} size="sm" />
+                  <span className="text-[10px] font-mono text-slate-400">
+                    {msg.dataFreshness || 'Live Telemetry'}
+                  </span>
+                </div>
+              )}
+
+              <p className="leading-relaxed whitespace-pre-wrap">{msg.text}</p>
+
+              {msg.safetyActionRecommendation && (
+                <div className="p-2.5 rounded-xl bg-emerald-950/40 border border-emerald-800/60 text-slate-200 mt-2 space-y-1">
+                  <div className="font-bold text-emerald-400 flex items-center gap-1.5 text-[11px]">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    <span>Recommended Immediate Action:</span>
                   </div>
-                )}
+                  <p className="text-[11px] text-slate-300 leading-snug">
+                    {msg.safetyActionRecommendation}
+                  </p>
+                </div>
+              )}
 
-                <div>{msg.text}</div>
-
-                {/* Safety Action Recommendation Callout */}
-                {!isUser && msg.safetyActionRecommendation && (
-                  <div className="mt-3 p-3 rounded-xl bg-emerald-950/30 border border-emerald-700/40 text-xs">
-                    <div className="font-bold text-emerald-400 flex items-center gap-1.5 mb-1">
-                      <CheckCircle2 className="w-4 h-4" />
-                      <span>Recommended Safety Action</span>
-                    </div>
-                    <p className="text-slate-200 text-xs leading-relaxed">
-                      {msg.safetyActionRecommendation}
-                    </p>
-                  </div>
-                )}
-
-                {/* Factors Tag list */}
-                {!isUser && msg.riskContext?.factors && (
-                  <div className="mt-2.5 flex flex-wrap gap-1.5 pt-1">
+              {msg.riskContext?.factors && msg.riskContext.factors.length > 0 && (
+                <div className="pt-2 border-t border-slate-800 space-y-1">
+                  <span className="text-[10px] font-mono text-slate-400 uppercase tracking-wider block">
+                    Telemetry Factors:
+                  </span>
+                  <div className="flex flex-wrap gap-1">
                     {msg.riskContext.factors.map((factor, idx) => (
                       <span
                         key={idx}
-                        className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-900 text-slate-300 border border-slate-700"
+                        className="text-[10px] font-mono px-2 py-0.5 rounded bg-slate-800 text-slate-300 border border-slate-700"
                       >
                         {factor}
                       </span>
                     ))}
                   </div>
-                )}
+                </div>
+              )}
 
-                {/* Source & Freshness Metadata */}
-                {!isUser && (msg.sources || msg.dataFreshness) && (
-                  <div className="mt-3 pt-2 border-t border-slate-700/60 flex flex-wrap items-center justify-between text-[10px] font-mono text-slate-400 gap-2">
-                    {msg.sources && (
-                      <span className="truncate">Source: {msg.sources.join(', ')}</span>
-                    )}
-                    {msg.dataFreshness && (
-                      <span className="text-emerald-400">{msg.dataFreshness}</span>
-                    )}
-                  </div>
+              <div className="flex items-center justify-between pt-1 text-[10px] opacity-70">
+                <span>{msg.timestamp}</span>
+                {msg.sources && msg.sources.length > 0 && (
+                  <span className="font-mono truncate max-w-[200px]">
+                    Source: {msg.sources[0]}
+                  </span>
                 )}
               </div>
-
-              <span className="text-[10px] font-mono text-slate-400 mt-1 px-1">
-                {msg.timestamp}
-              </span>
             </div>
-          );
-        })}
 
-        {/* Loading Bubble */}
+            {msg.sender === 'user' && (
+              <div className="w-8 h-8 rounded-xl bg-sky-600 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-md">
+                <User className="w-4 h-4" />
+              </div>
+            )}
+          </div>
+        ))}
+
         {loading && (
-          <div className="flex items-center gap-2 p-3 rounded-2xl bg-slate-800/80 border border-slate-700/80 text-xs text-slate-300 w-fit">
-            <Sparkles className="w-4 h-4 text-purple-400 animate-spin" />
-            <span>Analyzing Himalayan slope, radar & trail telemetry...</span>
+          <div className="flex gap-3 items-start">
+            <div className="w-8 h-8 rounded-xl bg-purple-600/20 border border-purple-500/30 text-purple-400 flex items-center justify-center shrink-0 animate-pulse">
+              <Bot className="w-4 h-4" />
+            </div>
+            <div className="p-3.5 rounded-2xl bg-alpine-900 border border-slate-700 text-slate-400 text-xs flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-purple-400 animate-ping" />
+              <span>Analyzing mountain sensor telemetry...</span>
+            </div>
           </div>
         )}
 
         <div ref={messagesEndRef} />
       </div>
 
+      {/* Suggested Quick Prompts */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 shrink-0 no-scrollbar">
+        {quickPrompts.map((prompt, idx) => (
+          <button
+            key={idx}
+            onClick={() => handleSend(prompt)}
+            disabled={loading}
+            className="whitespace-nowrap px-3 py-1.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 text-[11px] font-medium transition active:scale-95 shrink-0"
+          >
+            {prompt}
+          </button>
+        ))}
+      </div>
+
       {/* Input Box */}
-      <form
-        onSubmit={e => {
-          e.preventDefault();
-          handleSend();
-        }}
-        className="flex items-center gap-2 bg-alpine-900 border border-slate-800 rounded-2xl p-2 shrink-0 shadow-lg"
-      >
+      <div className="p-2 rounded-2xl bg-alpine-900 border border-slate-800 flex items-center gap-2 shrink-0 shadow-lg">
         <input
           type="text"
           value={input}
-          onChange={e => setInput(e.target.value)}
-          placeholder="Ask about route safety, landslides, flood risks, shelters..."
-          className="flex-1 px-3 py-2 bg-transparent text-white text-xs sm:text-sm focus:outline-none placeholder:text-slate-400"
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') handleSend();
+          }}
+          placeholder="Ask about road conditions, flood surge, or safety steps..."
+          disabled={loading}
+          className="flex-1 px-3 py-2 bg-transparent text-white text-xs placeholder:text-slate-500 focus:outline-none"
         />
         <button
-          type="submit"
-          disabled={!input.trim() || loading}
-          className="p-2.5 rounded-xl bg-shield-blue hover:bg-sky-600 text-white transition disabled:opacity-40 disabled:hover:bg-shield-blue shadow-sm"
+          onClick={() => handleSend()}
+          disabled={loading || !input.trim()}
+          className="px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 disabled:opacity-40 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-md shadow-sky-600/20 active:scale-95"
+          aria-label="Send query"
         >
-          <Send className="w-4 h-4" />
+          <span>Ask</span>
+          <Send className="w-3.5 h-3.5" />
         </button>
-      </form>
+      </div>
 
     </div>
   );

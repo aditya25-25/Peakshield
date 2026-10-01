@@ -1,140 +1,157 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { RiskZone, Incident, EmergencyAlert, WeatherSummary, SafeShelter } from '../types';
+﻿import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { 
+  WeatherData, 
+  RiskZone, 
+  Incident, 
+  SafeShelter, 
+  EmergencyAlert,
+  MissingPersonCase,
+  EmergencySituationBrief
+} from '../types';
 import { api } from '../services/api';
+import { 
+  MOCK_WEATHER, 
+  MOCK_RISK_ZONES, 
+  MOCK_INCIDENTS, 
+  MOCK_SHELTERS, 
+  MOCK_ALERTS, 
+  MOCK_MISSING_PERSONS,
+  MOCK_INITIAL_BRIEF 
+} from '../services/mockData';
 
 interface EmergencyContextType {
+  weather: WeatherData | null;
+  riskZones: RiskZone[];
+  activeZone: RiskZone | null;
+  setActiveZone: (zone: RiskZone | null) => void;
+  incidents: Incident[];
+  selectedIncident: Incident | null;
+  setSelectedIncident: (incident: Incident | null) => void;
+  shelters: SafeShelter[];
+  alerts: EmergencyAlert[];
+  missingPersons: MissingPersonCase[];
+  situationBrief: EmergencySituationBrief | null;
   isOnline: boolean;
   lastSyncTime: string;
-  weather: WeatherSummary | null;
-  riskZones: RiskZone[];
-  incidents: Incident[];
-  alerts: EmergencyAlert[];
-  shelters: SafeShelter[];
-  activeZone: RiskZone | null;
-  selectedIncident: Incident | null;
-  isReportModalOpen: boolean;
+  refreshData: () => Promise<void>;
+  
+  // Modals state
   isAmISafeModalOpen: boolean;
-  isOfflineGuideOpen: boolean;
-  unreadAlertsCount: number;
-  overallSafetyScore: number;
-  highestRiskLevel: 'LOW' | 'ADVISORY' | 'WARNING' | 'EMERGENCY';
-  openReportModal: () => void;
-  closeReportModal: () => void;
   openAmISafeModal: () => void;
   closeAmISafeModal: () => void;
-  openOfflineGuide: () => void;
-  closeOfflineGuide: () => void;
-  setSelectedIncident: (inc: Incident | null) => void;
-  setActiveZone: (zone: RiskZone | null) => void;
-  refreshData: () => Promise<void>;
-  markAlertsAsRead: () => void;
+
+  isReportModalOpen: boolean;
+  openReportModal: () => void;
+  closeReportModal: () => void;
+
+  isOfflineGuideModalOpen: boolean;
+  openOfflineGuideModal: () => void;
+  closeOfflineGuideModal: () => void;
+
+  isSosModalOpen: boolean;
+  openSosModal: () => void;
+  closeSosModal: () => void;
 }
 
 const EmergencyContext = createContext<EmergencyContextType | undefined>(undefined);
 
 export const EmergencyProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
-  const [lastSyncTime, setLastSyncTime] = useState<string>(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
-  const [weather, setWeather] = useState<WeatherSummary | null>(null);
-  const [riskZones, setRiskZones] = useState<RiskZone[]>([]);
-  const [incidents, setIncidents] = useState<Incident[]>([]);
-  const [alerts, setAlerts] = useState<EmergencyAlert[]>([]);
-  const [shelters, setShelters] = useState<SafeShelter[]>([]);
-  const [activeZone, setActiveZone] = useState<RiskZone | null>(null);
+  const [weather, setWeather] = useState<WeatherData | null>(MOCK_WEATHER);
+  const [riskZones, setRiskZones] = useState<RiskZone[]>(MOCK_RISK_ZONES);
+  const [activeZone, setActiveZone] = useState<RiskZone | null>(MOCK_RISK_ZONES[0] || null);
+  const [incidents, setIncidents] = useState<Incident[]>(MOCK_INCIDENTS);
   const [selectedIncident, setSelectedIncident] = useState<Incident | null>(null);
-  
-  const [isReportModalOpen, setIsReportModalOpen] = useState<boolean>(false);
-  const [isAmISafeModalOpen, setIsAmISafeModalOpen] = useState<boolean>(false);
-  const [isOfflineGuideOpen, setIsOfflineGuideOpen] = useState<boolean>(false);
-  const [unreadAlertsCount, setUnreadAlertsCount] = useState<number>(1);
+  const [shelters, setShelters] = useState<SafeShelter[]>(MOCK_SHELTERS);
+  const [alerts, setAlerts] = useState<EmergencyAlert[]>(MOCK_ALERTS);
+  const [missingPersons, setMissingPersons] = useState<MissingPersonCase[]>(MOCK_MISSING_PERSONS);
+  const [situationBrief, setSituationBrief] = useState<EmergencySituationBrief | null>(MOCK_INITIAL_BRIEF);
 
-  const loadData = useCallback(async () => {
-    try {
-      const [w, rz, inc, alt, sh] = await Promise.all([
-        api.getWeather(),
-        api.getRiskZones(),
-        api.getIncidents(),
-        api.getAlerts(),
-        api.getShelters(),
-      ]);
+  const [isOnline, setIsOnline] = useState<boolean>(navigator.onLine);
+  const [lastSyncTime, setLastSyncTime] = useState<string>(
+    new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+  );
 
-      setWeather(w);
-      setRiskZones(rz);
-      setIncidents(inc);
-      setAlerts(alt);
-      setShelters(sh);
-      if (rz.length > 0 && !activeZone) {
-        setActiveZone(rz[0]);
-      }
-      setLastSyncTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
-    } catch (err) {
-      console.error('Failed to load emergency data:', err);
-    }
-  }, [activeZone]);
+  // Modals
+  const [isAmISafeModalOpen, setIsAmISafeModalOpen] = useState(false);
+  const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+  const [isOfflineGuideModalOpen, setIsOfflineGuideModalOpen] = useState(false);
+  const [isSosModalOpen, setIsSosModalOpen] = useState(false);
 
+  // Online / Offline Listeners
   useEffect(() => {
-    loadData();
-
-    const handleOnline = () => {
-      setIsOnline(true);
-      loadData();
-    };
+    const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
 
     window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
-    // Auto-refresh pulse every 30s
-    const interval = setInterval(loadData, 30000);
-
     return () => {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
-      clearInterval(interval);
     };
-  }, [loadData]);
+  }, []);
 
-  const openReportModal = () => setIsReportModalOpen(true);
-  const closeReportModal = () => setIsReportModalOpen(false);
-  const openAmISafeModal = () => setIsAmISafeModalOpen(true);
-  const closeAmISafeModal = () => setIsAmISafeModalOpen(false);
-  const openOfflineGuide = () => setIsOfflineGuideOpen(true);
-  const closeOfflineGuide = () => setIsOfflineGuideOpen(false);
+  const refreshData = useCallback(async () => {
+    try {
+      const [w, rz, inc, sh, alt, mp, sb] = await Promise.all([
+        api.getWeather(),
+        api.getRiskZones(),
+        api.getIncidents(),
+        api.getShelters(),
+        api.getAlerts(),
+        api.getMissingPersons(),
+        api.getSituationBrief(),
+      ]);
 
-  const markAlertsAsRead = () => setUnreadAlertsCount(0);
+      setWeather(w);
+      setRiskZones(rz);
+      if (rz.length > 0 && !activeZone) setActiveZone(rz[0]);
+      setIncidents(inc);
+      setShelters(sh);
+      setAlerts(alt);
+      setMissingPersons(mp);
+      setSituationBrief(sb);
+      setLastSyncTime(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+    } catch (err) {
+      console.warn('Network sync failed, retaining cached data:', err);
+    }
+  }, [activeZone]);
 
-  // Derive safety score and highest active risk
-  const overallSafetyScore = 82; // 0-100 hazard index (higher = greater danger)
-  const highestRiskLevel = alerts.some(a => a.level === 'EMERGENCY') ? 'EMERGENCY' : 'WARNING';
+  useEffect(() => {
+    refreshData();
+    const interval = setInterval(refreshData, 30000);
+    return () => clearInterval(interval);
+  }, [refreshData]);
 
   return (
     <EmergencyContext.Provider
       value={{
-        isOnline,
-        lastSyncTime,
         weather,
         riskZones,
-        incidents,
-        alerts,
-        shelters,
         activeZone,
-        selectedIncident,
-        isReportModalOpen,
-        isAmISafeModalOpen,
-        isOfflineGuideOpen,
-        unreadAlertsCount,
-        overallSafetyScore,
-        highestRiskLevel,
-        openReportModal,
-        closeReportModal,
-        openAmISafeModal,
-        closeAmISafeModal,
-        openOfflineGuide,
-        closeOfflineGuide,
-        setSelectedIncident,
         setActiveZone,
-        refreshData: loadData,
-        markAlertsAsRead
+        incidents,
+        selectedIncident,
+        setSelectedIncident,
+        shelters,
+        alerts,
+        missingPersons,
+        situationBrief,
+        isOnline,
+        lastSyncTime,
+        refreshData,
+        isAmISafeModalOpen,
+        openAmISafeModal: () => setIsAmISafeModalOpen(true),
+        closeAmISafeModal: () => setIsAmISafeModalOpen(false),
+        isReportModalOpen,
+        openReportModal: () => setIsReportModalOpen(true),
+        closeReportModal: () => setIsReportModalOpen(false),
+        isOfflineGuideModalOpen,
+        openOfflineGuideModal: () => setIsOfflineGuideModalOpen(true),
+        closeOfflineGuideModal: () => setIsOfflineGuideModalOpen(false),
+        isSosModalOpen,
+        openSosModal: () => setIsSosModalOpen(true),
+        closeSosModal: () => setIsSosModalOpen(false),
       }}
     >
       {children}
@@ -144,6 +161,8 @@ export const EmergencyProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
 export const useEmergency = () => {
   const context = useContext(EmergencyContext);
-  if (!context) throw new Error('useEmergency must be used within an EmergencyProvider');
+  if (!context) {
+    throw new Error('useEmergency must be used within an EmergencyProvider');
+  }
   return context;
 };

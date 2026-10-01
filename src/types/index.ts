@@ -1,19 +1,26 @@
 export type RiskLevel = 'LOW' | 'ADVISORY' | 'WARNING' | 'EMERGENCY';
 
-export type IncidentType = 
-  | 'LANDSLIDE'
-  | 'FLASH_FLOOD'
-  | 'ACCIDENT'
-  | 'MISSING_PERSON'
-  | 'ROAD_BLOCKAGE'
-  | 'AVALANCHE'
-  | 'OTHER';
-
 export type VerificationState = 'SUBMITTED' | 'VERIFIED' | 'CONFIRMED_EMERGENCY';
 
-export type IncidentStatus = 'REPORTED' | 'DISPATCHED' | 'IN_PROGRESS' | 'RESOLVED' | 'DISMISSED';
+export type IncidentType = 
+  | 'LANDSLIDE' 
+  | 'FLASH_FLOOD' 
+  | 'ROAD_BLOCKAGE' 
+  | 'ACCIDENT' 
+  | 'MISSING_PERSON' 
+  | 'OTHER';
 
-export type UserRole = 'TREKKER' | 'INCIDENT_COMMANDER' | 'NDRF_OFFICER' | 'ADMIN';
+export type IncidentStatus = 
+  | 'REPORTED' 
+  | 'DISPATCHED' 
+  | 'ASSIGNED' 
+  | 'IN_PROGRESS' 
+  | 'RESPONDING' 
+  | 'RESOLVED';
+
+export type MissingPersonStatus = 'ACTIVE_SEARCH' | 'LOCATED' | 'CRITICAL';
+
+export type UserRole = 'citizen' | 'commander';
 
 export interface Coordinates {
   lat: number;
@@ -21,22 +28,38 @@ export interface Coordinates {
   altitudeMeters?: number;
 }
 
+export interface WeatherData {
+  temperatureC: number;
+  condition: string;
+  windSpeedKmh: number;
+  humidityPercent: number;
+  precipitationMm: number;
+  visibilityKm: number;
+  barometricPressureHpa?: number;
+  freezeLevelMeters?: number;
+  uvIndex?: number;
+  forecastSummary?: string;
+  lastUpdated?: string;
+}
+
+export type WeatherSummary = WeatherData;
+
 export interface RiskZone {
   id: string;
   name: string;
   region: string;
   level: RiskLevel;
-  score: number; // 0 to 100
+  score: number;
   coordinates: Coordinates;
   radiusMeters: number;
   primaryHazard: string;
   factors: {
     rainfallMm24h: number;
-    landslideSusceptibilityScore: number; // 0-100
+    landslideSusceptibilityScore: number;
     slopeAngleDegrees: number;
     roadPassabilityPercent: number;
-    activeSeismicHistoryScore: number;
-    flashFloodIndex: number;
+    activeSeismicHistoryScore?: number;
+    flashFloodIndex?: number;
   };
   explanation: string;
   recommendedAction: string;
@@ -56,54 +79,32 @@ export interface Incident {
   status: IncidentStatus;
   verificationState: VerificationState;
   reportedBy: string;
-  assignedTeam?: string;
   reporterContact?: string;
-  photoUrl?: string;
+  assignedTeam?: string;
   createdAt: string;
   updatedAt: string;
-  casualtiesCount?: number;
+  photoUrl?: string;
   peopleAtRiskCount?: number;
+  casualtiesCount?: number;
   roadBlocked?: boolean;
 }
 
-export interface MissingPersonCase {
+export interface SafeShelter {
   id: string;
-  fullName: string;
-  age: number;
-  gender: string;
-  trekGroup: string;
-  contactNumber: string;
-  description: string;
-  photoUrl?: string;
-  lastKnownLocation: string;
-  lastKnownCoordinates: Coordinates;
-  lastKnownTime: string;
-  terrainDifficulty: 'MODERATE' | 'STEEP' | 'GLACIAL' | 'HIGH_ALTITUDE';
-  searchPriority: 'CRITICAL' | 'HIGH' | 'MEDIUM';
-  status: 'ACTIVE_SEARCH' | 'LOCATED_SAFE' | 'MEDICAL_EVAC' | 'RECOVERED';
-  assignedTeams: string[];
-  evidenceLog: {
-    id: string;
-    timestamp: string;
-    description: string;
-    source: string;
-  }[];
-  searchRadiusKm: number;
-}
-
-export interface EmergencyAlert {
-  id: string;
-  title: string;
-  level: RiskLevel;
-  hazardType: string;
-  region: string;
-  description: string;
-  issuedAt: string;
-  expiresAt: string;
-  recommendedActions: string[];
-  sourceAgency: string;
-  isBroadcast: boolean;
-  affectedCoordinates?: Coordinates[];
+  name: string;
+  locationName: string;
+  coordinates: Coordinates;
+  capacityTotal: number;
+  capacityAvailable: number;
+  hasMedicalKit: boolean;
+  hasSatelliteComm: boolean;
+  hasHeatedBunks?: boolean;
+  hasHeatedShelter?: boolean;
+  hasHelipad?: boolean;
+  contactFreqKhz: string;
+  contactPhone?: string;
+  distanceKm?: number;
+  type?: string;
 }
 
 export interface RouteOption {
@@ -116,36 +117,76 @@ export interface RouteOption {
   elevationGainMeters: number;
   overallRiskLevel: RiskLevel;
   riskScore: number;
-  roadCondition: 'CLEAR' | 'CAUTION' | 'RESTRICTED' | 'BLOCKED';
+  roadCondition: 'CLEAR' | 'CAUTION' | 'BLOCKED';
   hazardExposure: {
     landslideProneKm: number;
     floodProneKm: number;
-    steepPassesCount: number;
+    unpavedKm?: number;
+    steepPassesCount?: number;
   };
   whyThisRoute: string;
-  waypoints: Coordinates[];
+  waypoints?: {
+    name?: string;
+    lat: number;
+    lng: number;
+    coordinates?: Coordinates;
+    elevationMeters?: number;
+    condition?: string;
+  }[];
 }
 
-export interface SafeShelter {
+export interface MissingPersonCase {
   id: string;
-  name: string;
-  type: 'NDRF_POST' | 'MOUNTAIN_HUT' | 'ARMY_CAMP' | 'COMMUNITY_CENTER' | 'MEDICAL_POST';
-  locationName: string;
-  coordinates: Coordinates;
-  distanceKm?: number;
-  capacityTotal: number;
-  capacityAvailable: number;
-  hasMedicalKit: boolean;
-  hasSatelliteComm: boolean;
-  hasHeatedShelter: boolean;
-  hasHelipad: boolean;
-  contactFreqKhz?: string;
-  contactPhone?: string;
+  fullName: string;
+  age: number;
+  gender: string;
+  lastSeenLocation?: string;
+  lastKnownLocation?: string;
+  lastSeenCoordinates?: Coordinates;
+  lastKnownCoordinates?: Coordinates;
+  lastSeenTimestamp?: string;
+  lastKnownTime?: string;
+  reportingParty?: string;
+  contactNumber?: string;
+  physicalDescription?: string;
+  clothingDescription?: string;
+  description?: string;
+  trekGroup?: string;
+  terrainDifficulty?: string;
+  searchRadiusKm?: number;
+  searchPriority?: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  status: MissingPersonStatus;
+  leadSearchTeam?: string;
+  assignedTeams?: string[];
+  evidenceLog: {
+    id: string;
+    timestamp: string;
+    description: string;
+    source: string;
+  }[];
+}
+
+export interface EmergencyAlert {
+  id: string;
+  title: string;
+  severity?: RiskLevel;
+  level?: RiskLevel;
+  sector?: string;
+  region?: string;
+  hazardType?: string;
+  description: string;
+  actionInstructions?: string;
+  recommendedActions?: string[];
+  sourceAgency?: string;
+  isBroadcast?: boolean;
+  issuedAt: string;
+  expiresAt?: string;
+  issuedBy?: string;
 }
 
 export interface AIChatMessage {
   id: string;
-  sender: 'user' | 'assistant' | 'system';
+  sender: 'user' | 'assistant';
   text: string;
   timestamp: string;
   safetyActionRecommendation?: string;
@@ -158,34 +199,42 @@ export interface AIChatMessage {
   isDecisionSupportOnly?: boolean;
 }
 
-export interface WeatherSummary {
-  temperatureC: number;
-  condition: string;
-  precipitationMm: number;
-  windSpeedKmh: number;
-  humidityPercent: number;
-  visibilityKm: number;
-  barometricPressureHpa: number;
-  freezeLevelMeters: number;
-  uvIndex: number;
-}
-
 export interface EmergencySituationBrief {
   id: string;
   timestamp: string;
-  region: string;
-  incidentCommander: string;
-  executiveSummary: string;
-  majorIncidentsSummary: string[];
-  highRiskZonesSummary: {
+  region?: string;
+  incidentCommander?: string;
+  executiveSummary?: string;
+  summary?: string;
+  majorIncidentsSummary?: string[];
+  keyHazards?: string[];
+  highRiskZonesSummary?: {
     zoneName: string;
     riskLevel: RiskLevel;
     rainfall24h: number;
     criticalHazards: string;
   }[];
-  weatherForecast: string;
-  recommendedEocActions: string[];
-  resourceDeployments: string[];
-  sourcesCited: string[];
-  generatedAt: string;
+  weatherForecast?: string;
+  recommendedEocActions?: string[];
+  recommendedCommandActions?: string[];
+  resourceDeployments?: string[];
+  sourcesCited?: string[];
+  generatedAt?: string;
+  activeIncidentCount?: number;
+  deployedTeamsCount?: number;
+  evacuatedPersonsCount?: number;
 }
+
+export interface UserProfile {
+  id: string;
+  name: string;
+  email?: string;
+  phone: string;
+  emergencyContact: string;
+  role: UserRole;
+  currentSector: string;
+  medicalNotes?: string;
+  isGuest?: boolean;
+  authToken?: string;
+}
+
